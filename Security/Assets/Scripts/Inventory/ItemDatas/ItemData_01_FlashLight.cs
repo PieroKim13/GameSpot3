@@ -1,33 +1,30 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Item Data - FlashLight", menuName = "Scriptable Object/Item Data - FlashLight", order = 2)]
 public class ItemData_01_FlashLight : ItemData
 {
     [Header("손전등 아이템 데이터")]
-    public float maxValue = 100;
-    public float currentValue;
+    public float Battery_value = 100;
 
-    public bool switching;
+    public GameObject mFlash_Off;
+    public GameObject mFlash_On;
 
-    public bool Use(GameObject target)
+    public void Awake()
     {
-        bool result = false;
+        mFlash_Off = modelPregab.gameObject.transform.GetChild(0).gameObject;
+        mFlash_Off.SetActive(true);
 
-        if(currentValue > 0.0f)
-        {
+        mFlash_On = modelPregab.gameObject.transform.GetChild(1).gameObject;
+        mFlash_On.SetActive(false);
 
-        }
-
-        return result;
-    }
-
-
-    public void Lighting(GameObject target)
-    {
 
     }
 
+    public void Used()
+    {
 
+    }
 }

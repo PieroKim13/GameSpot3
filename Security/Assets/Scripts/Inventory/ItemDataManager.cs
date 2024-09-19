@@ -4,7 +4,7 @@ using UnityEngine;
 
 public enum ItemCode
 {
-    None,
+    None = 0,
     FlashLight,
     Temp_01,
     Temp_02,
