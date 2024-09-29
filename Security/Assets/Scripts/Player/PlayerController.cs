@@ -7,10 +7,15 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
+    // inputAction - 인풋액션
     PlayerInputAction InputAction;
     public PlayerInputAction playerInputAction => InputAction;
+
+    // chagracterController - 캐릭터 컨트롤러
     CharacterController controller;
     public CharacterController Controller => controller;
+
+    // cinemachineCamera - 시네머신 카메라
     CinemachineVirtualCamera cinemachine;
     public CinemachineVirtualCamera Cinemachine => cinemachine;
 
@@ -20,7 +25,7 @@ public class PlayerController : MonoBehaviour
     public Transform cameraRoot;
 
     /// <summary> 
-    /// 위치변수
+    /// 위치변수 - (0, 0, 0)좌표
     /// </summary>
     Vector3 moveDir = Vector3.zero;
 
@@ -65,17 +70,17 @@ public class PlayerController : MonoBehaviour
     float gravity = 9.8f;
 
     /// <summary>
-    /// 점프 카운트(1번으로 제한)
+    /// 점프 횟수 - 더블점프 금지
     /// </summary>
     int jumpCount = 0;
 
     /// <summary>
-    /// 웅크리기 감소량
+    /// 웅크리기 이동속도 감소량
     /// </summary>
     float crouchDecrease = 1.0f;
 
     /// <summary>
-    /// 웅크리기 체크
+    /// 웅크리는지 확인하는 변수
     /// </summary>
     bool crouchChecking = false;
 
@@ -94,8 +99,19 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     float curRotateY = 0.0f;
 
+    /// <summary>
+    /// 임시로 값을 저장하는 변수
+    /// </summary>
     float Temp = 0.0f;
+    
+    /// <summary>
+    /// 바닥을 체크하는 position을 담은 상자 크기
+    /// </summary>
     Vector3 boxsize = new Vector3(0.25f, 0.125f, 0.25f);
+   
+    /// <summary>
+    /// 바닥 위치
+    /// </summary>
     Vector3 groundCheckPostion;
 
     public Action onSprinting;
@@ -132,10 +148,14 @@ public class PlayerController : MonoBehaviour
         InputAction.Player.Crouch.canceled += OnCrouch;
         InputAction.Mouse.Enable();
         InputAction.Mouse.MouseVector2.performed += OnMouseDelta;
+        InputAction.Mouse.MouseLeftClick.performed += OnMouseLeftClick;
+        InputAction.Mouse.MouseLeftClick.canceled += OnMouseLeftClick;
     }
 
     private void OnDisable()
     {
+        InputAction.Mouse.MouseLeftClick.canceled -= OnMouseLeftClick;
+        InputAction.Mouse.MouseLeftClick.performed -= OnMouseLeftClick;
         InputAction.Mouse.MouseVector2.performed -= OnMouseDelta;
         InputAction.Mouse.Disable();
         InputAction.Player.Crouch.canceled -= OnCrouch;
@@ -259,6 +279,23 @@ public class PlayerController : MonoBehaviour
         cameraRoot.rotation = Quaternion.Euler(curRotateY, cameraRoot.eulerAngles.y, cameraRoot.eulerAngles.z);
     }
 
+    private void OnMouseLeftClick(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            Ray ray = new(cameraRoot.position, cameraRoot.forward);
+            if(Physics.Raycast(ray, out RaycastHit hitInfo, 2.0f, LayerMask.GetMask("Door")))
+            {
+                Door obj = hitInfo.transform.parent.GetComponent<Door>();
+                //obj.Action();
+            }
+        }
+        else
+        {
+
+        }
+    }
+
     private bool IsGrounded()
     {
         // 점프 상태가 아니고, 현재 y높이가 목표 y보다 높을 때
@@ -300,6 +337,8 @@ public class PlayerController : MonoBehaviour
         sprintChecking = false;
     }
 
+
+
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
@@ -313,6 +352,11 @@ public class PlayerController : MonoBehaviour
         Gizmos.DrawCube(groundCheckPostion, boxsize);
         Gizmos.color = Color.white;
         Gizmos.DrawSphere(cameraRoot.transform.position, 0.25f);
+
+        Gizmos.color = Color.red;
+        Vector3 from = cameraRoot.position;
+        Vector3 to = cameraRoot.transform.position + cameraRoot.forward * 2.0f;
+        Gizmos.DrawLine(from, to);
     }
 
 #endif

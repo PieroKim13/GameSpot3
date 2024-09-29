@@ -25,6 +25,6 @@ public class ItemData_01_FlashLight : ItemData
 
     public void Used()
     {
-
+        
     }
 }

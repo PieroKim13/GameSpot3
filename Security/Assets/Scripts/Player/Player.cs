@@ -9,6 +9,7 @@ public class Player : MonoBehaviour
     IEnumerator sprintCorutine;
 
     public Action<float> onStaminaChange { get; set; }
+    public Action<float> onHpChange { get; set; }
 
     bool IsAlive => hp > 0;
 
@@ -39,9 +40,10 @@ public class Player : MonoBehaviour
                 hp = value;
                 if (hp <= 0)
                 {
-                    hp = Mathf.Clamp(hp, 0, MaxHP);
 
                 }
+                hp = Mathf.Clamp(hp, 0, MaxHP);
+                onHpChange?.Invoke(hp);
             }
         }
     }

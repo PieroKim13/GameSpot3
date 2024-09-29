@@ -20,7 +20,19 @@ public class Door : MonoBehaviour {
 		anim = GetComponent<Animation> ();
 		_animName = anim.clip.name;
 	}
-	
+	/*
+	public void Action()
+	{
+		if (!isOpen)
+		{
+			OpenDoor();
+		}
+		else
+		{
+			CloseDoor();
+		}
+	}
+	*/
 	// Update is called once per frame
 	void Update () {
 		if (inTrigger == true) {
@@ -39,6 +51,7 @@ public class Door : MonoBehaviour {
 		anim [_animName].speed = 1 * OpenSpeed;
 		anim [_animName].normalizedTime = 0;
 		anim.Play (_animName);
+		//isOpen = true;
 
 	}
 	void CloseDoor(){
@@ -49,6 +62,7 @@ public class Door : MonoBehaviour {
 			anim [_animName].normalizedTime = 1;
 		}
 		anim.Play (_animName);
+		//isOpen = false;
 	}
 
 	void OnTriggerEnter(Collider other){
