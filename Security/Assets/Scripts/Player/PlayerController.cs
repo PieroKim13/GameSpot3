@@ -2,20 +2,43 @@ using Cinemachine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TreeEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
-    // inputAction - 인풋액션
+    enum PlayerState
+    {
+        Idle = 0,
+        Move,
+    }
+    PlayerState state = PlayerState.Idle;
+    PlayerState State
+    {
+        get => state;
+        set
+        {
+            if (state != value)
+            {
+                state = value;
+                if(state == PlayerState.Idle)
+                {
+
+                }
+                else if (state == PlayerState.Move)
+                {
+
+                }
+            }
+        }
+    }
+
     PlayerInputAction InputAction;
     public PlayerInputAction playerInputAction => InputAction;
-
-    // chagracterController - 캐릭터 컨트롤러
     CharacterController controller;
     public CharacterController Controller => controller;
-
-    // cinemachineCamera - 시네머신 카메라
     CinemachineVirtualCamera cinemachine;
     public CinemachineVirtualCamera Cinemachine => cinemachine;
 
@@ -98,11 +121,6 @@ public class PlayerController : MonoBehaviour
     /// 현재 이동한 y방향 전환
     /// </summary>
     float curRotateY = 0.0f;
-
-    /// <summary>
-    /// 임시로 값을 저장하는 변수
-    /// </summary>
-    float Temp = 0.0f;
     
     /// <summary>
     /// 바닥을 체크하는 position을 담은 상자 크기
@@ -114,24 +132,28 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     Vector3 groundCheckPostion;
 
+    public Action onInteraction;
     public Action onSprinting;
     public Action offSprinting;
 
-    public bool isStamina = false;
+    bool ison = false;
+    public bool isStamina = false;  // false = 달리는 중(스테미나 회복X), true = 기본 상태(스테미나 회복O)
+    public bool isMove = false; // false = 기본상태, true = 움직이는 중
 
     private void Start()
     {
         currentSpeed = walkingSpeed;
-        Temp = currentSpeed;
+
+        StartCoroutine(ShotRaycast());
     }
 
     private void Awake()
     {
         InputAction = new PlayerInputAction();
-
         controller = GetComponent<CharacterController>();
-        cameraRoot = transform.GetChild(0);
         cinemachine = GetComponentInChildren<CinemachineVirtualCamera>();
+
+        cameraRoot = transform.GetChild(0);
 
         Cursor.lockState = CursorLockMode.Locked;
     }
@@ -146,6 +168,7 @@ public class PlayerController : MonoBehaviour
         InputAction.Player.Jump.performed += OnJump;
         InputAction.Player.Crouch.performed += OnCrouch;
         InputAction.Player.Crouch.canceled += OnCrouch;
+
         InputAction.Mouse.Enable();
         InputAction.Mouse.MouseVector2.performed += OnMouseDelta;
         InputAction.Mouse.MouseLeftClick.performed += OnMouseLeftClick;
@@ -158,6 +181,7 @@ public class PlayerController : MonoBehaviour
         InputAction.Mouse.MouseLeftClick.performed -= OnMouseLeftClick;
         InputAction.Mouse.MouseVector2.performed -= OnMouseDelta;
         InputAction.Mouse.Disable();
+
         InputAction.Player.Crouch.canceled -= OnCrouch;
         InputAction.Player.Crouch.performed -= OnCrouch;
         InputAction.Player.Jump.performed -= OnJump;
@@ -171,11 +195,16 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         if (!IsGrounded())
-        {
             moveDir.y -= gravity * Time.deltaTime;
+        
+        if(isMove&&sprintChecking)
+        {
+            isStamina = false;
+            onSprinting?.Invoke();
         }
+
         // 플레이어 x, z좌표 이동
-        controller.Move(Time.deltaTime * currentSpeed * transform.TransformDirection(new Vector3(moveDir.x, 0.0f, moveDir.z)));
+        controller.Move(Time.deltaTime * (currentSpeed * crouchDecrease) * transform.TransformDirection(new Vector3(moveDir.x, 0.0f, moveDir.z)));
         // 플레이어 y좌표 이동
         controller.Move(Time.deltaTime * new Vector3(0.0f, moveDir.y, 0.0f));
     }
@@ -183,9 +212,18 @@ public class PlayerController : MonoBehaviour
     private void OnMove(InputAction.CallbackContext context)
     {
         Vector2 dir = context.ReadValue<Vector2>();
-
-        // 입력받은 W, A, S, D(Vector2)좌표를 x, z좌표로 지정
         moveDir.x = dir.x; moveDir.z = dir.y;
+
+        if (context.performed)
+        {
+            isMove = true;
+            State = PlayerState.Move;
+        }
+        else
+        {
+            isMove = false;
+            State = PlayerState.Idle;
+        }
     }
 
     private void OnSprint(InputAction.CallbackContext context)
@@ -195,16 +233,16 @@ public class PlayerController : MonoBehaviour
         {
             if (context.performed)
             {
-                // 현재 이동속도 = 달리기 속도
-                currentSpeed = sprintingSpeed * crouchDecrease;
-                onSprinting?.Invoke();
-                isStamina = false;
                 sprintChecking = true;
+                currentSpeed = sprintingSpeed;
             }
             else
             {
-                // 끝내기 코루틴 실행
-                OffSprinting();
+                // sprintChecking가 true인 경우 = 스테미나 가 0보다 높거나 Sift키를 누르고 있는 경우, 둘중 하나라도 false면 실행 안함
+                if (sprintChecking) 
+                {
+                    OffSprinting();
+                }
             }
         }
     }
@@ -239,8 +277,6 @@ public class PlayerController : MonoBehaviour
             {
                 // 감소량 0.5배
                 crouchDecrease = 0.5f;
-                // 현재 속도 = 임시변수(현재 속도) * 감소량(0.5)
-                currentSpeed = Temp * crouchDecrease;
                 crouchChecking = true;
 
                 // 시점 낮추기 #웅크리기 O
@@ -250,8 +286,6 @@ public class PlayerController : MonoBehaviour
             {
                 // 감소량 X
                 crouchDecrease = 1.0f;
-                // 현재 속도 = 걷기 속도(현재 속도) * 감소량X
-                currentSpeed = Temp * crouchDecrease;
                 crouchChecking = false;
 
                 // 시점 올리기 #웅크리기 X
@@ -283,16 +317,11 @@ public class PlayerController : MonoBehaviour
     {
         if (context.performed)
         {
-            Ray ray = new(cameraRoot.position, cameraRoot.forward);
-            if(Physics.Raycast(ray, out RaycastHit hitInfo, 2.0f, LayerMask.GetMask("Door")))
-            {
-                Door obj = hitInfo.transform.parent.GetComponent<Door>();
-                //obj.Action();
-            }
+            ison = true;
         }
         else
         {
-
+            ison = false;
         }
     }
 
@@ -326,24 +355,68 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
-    /// <summary>
-    /// 달리기 종료 코루틴
-    /// </summary>
     public void OffSprinting()
     {
-        // 현재 속도 = 걷기 속도
-        currentSpeed = walkingSpeed * crouchDecrease;
-        offSprinting?.Invoke();
         sprintChecking = false;
+        currentSpeed = walkingSpeed;
+
+        offSprinting?.Invoke();
     }
 
 
+    public Transform tra;
+    /// <summary>
+    /// 마우스 좌클릭 하면 발동하는 이벤트 함수
+    /// </summary>
+    private void OnDetectTarget()
+    {
+        Image cross = tra.GetComponent<Image>();
+        Ray ray = new(cameraRoot.position, cameraRoot.forward);
+        if (Physics.Raycast(ray, out RaycastHit hitInfo, 2.0f))
+        {
+                Debug.Log(hitInfo.transform.name);
+            if (hitInfo.transform.gameObject.layer == 7)
+            {
+                cross.sprite = GameManager.Inst.crossHair2;
+                if(ison)
+                {
+                    SingleDoor dor = hitInfo.transform.parent.GetComponent<SingleDoor>();
+                    dor.Interact_Door();
+                    ison = false;
+                }
+            }
+            else
+                cross.sprite = GameManager.Inst.crossHair1;
+        }
+        else
+        {
+            cross.sprite = GameManager.Inst.crossHair1;
+
+        }
+
+    }
+
+    private IEnumerator ShotRaycast()
+    {
+        int framCount = 0;
+        while (true)
+        {
+            if(framCount >= 15)
+            {
+                OnDetectTarget();
+                framCount = 0;
+            }
+
+            framCount++;
+            yield return null;
+        }
+    }
 
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
-        //Gizmos.color = Color.cyan;
-        //Gizmos.DrawCube(groundCheckPostion, boxsize);
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawCube(groundCheckPostion, boxsize);
     }
 
     private void OnDrawGizmos()

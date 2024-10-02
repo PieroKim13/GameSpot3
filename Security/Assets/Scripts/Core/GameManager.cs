@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class GameManager : Singleton<GameManager>
 {
+    public Sprite crossHair1;
+    public Sprite crossHair2;
+
     Player player;
     public Player Player => player;
 

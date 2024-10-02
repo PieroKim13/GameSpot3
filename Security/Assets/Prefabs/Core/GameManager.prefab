@@ -45,6 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67c0f3fbca6830346ba29eabc436193f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  crossHair1: {fileID: 21300000, guid: b8b81e8e63866674b8c482844d62d2bb, type: 3}
+  crossHair2: {fileID: 21300000, guid: fc877ac2f1bb6ff46bb2ee3739a42be2, type: 3}
 --- !u!114 &3242334388971889792
 MonoBehaviour:
   m_ObjectHideFlags: 0
