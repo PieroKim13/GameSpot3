@@ -363,36 +363,41 @@ public class PlayerController : MonoBehaviour
         offSprinting?.Invoke();
     }
 
-
-    public Transform tra;
     /// <summary>
     /// 마우스 좌클릭 하면 발동하는 이벤트 함수
     /// </summary>
     private void OnDetectTarget()
     {
-        Image cross = tra.GetComponent<Image>();
-        Ray ray = new(cameraRoot.position, cameraRoot.forward);
-        if (Physics.Raycast(ray, out RaycastHit hitInfo, 2.0f))
-        {
-                Debug.Log(hitInfo.transform.name);
-            if (hitInfo.transform.gameObject.layer == 7)
-            {
-                cross.sprite = GameManager.Inst.crossHair2;
-                if(ison)
-                {
-                    SingleDoor dor = hitInfo.transform.parent.GetComponent<SingleDoor>();
-                    dor.Interact_Door();
-                    ison = false;
-                }
-            }
-            else
-                cross.sprite = GameManager.Inst.crossHair1;
-        }
-        else
-        {
-            cross.sprite = GameManager.Inst.crossHair1;
+        Ray ray = new(cameraRoot.position, cameraRoot.forward); // 카메라 위치에서, 카메라 정면 방향으로
 
+        // 레이를 쐈을 때 거리는 2.0f 거리 내 충돌을 감지 할 경우(거리는 2.0f)
+        if (Physics.Raycast(ray, out RaycastHit hitInfo, 2.0f, LayerMask.GetMask("Interaction")))
+        {
+            
         }
+        //Image cross = tra.GetComponent<Image>();
+        //Ray ray = new(cameraRoot.position, cameraRoot.forward);
+        //if (Physics.Raycast(ray, out RaycastHit hitInfo, 2.0f))
+        //{
+        //        Debug.Log(hitInfo.transform.name);
+        //    if (hitInfo.transform.gameObject.layer == 7)
+        //    {
+        //        cross.sprite = GameManager.Inst.crossHair2;
+        //        if(ison)
+        //        {
+        //            SingleDoor dor = hitInfo.transform.parent.GetComponent<SingleDoor>();
+        //            dor.Interact_Door();
+        //            ison = false;
+        //        }
+        //    }
+        //    else
+        //        cross.sprite = GameManager.Inst.crossHair1;
+        //}
+        //else
+        //{
+        //    cross.sprite = GameManager.Inst.crossHair1;
+
+        //}
 
     }
 

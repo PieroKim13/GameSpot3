@@ -2,30 +2,73 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : Singleton<GameManager>
+public class GameManager : MonoBehaviour
 {
+
+    private static GameManager instance;
+    public static GameManager Inst
+    {
+        get
+        {
+            Init();
+            return instance;
+        }
+    }
+
     public Sprite crossHair1;
     public Sprite crossHair2;
 
     Player player;
-    public Player Player => player;
-
     ItemDataManager itemDataManager;
-    public ItemDataManager itemData => itemDataManager;
-
     UI_Inventory uI_Inventory;
-    public UI_Inventory UI_Inventory => uI_Inventory;
 
-    protected override void OnPreInitialize()
+    public Player Player => Inst.player;
+    public ItemDataManager itemData =>Inst.itemDataManager;
+    public UI_Inventory UI_Inventory => Inst.uI_Inventory;
+
+    private void Awake()
     {
-        base.OnPreInitialize();
+        Init();
+
+        if(instance != this)
+        {
+            Destroy(this.gameObject);
+        }
         itemDataManager = GetComponent<ItemDataManager>();
+        player = FindAnyObjectByType<Player>();
     }
 
-    protected override void OnIntialize()
+    private void Start()
     {
-        base.OnIntialize();
-        player = FindObjectOfType<Player>();
-        uI_Inventory = FindObjectOfType<UI_Inventory>();
+        player = FindObjectOfType<Player>(true);
+
+        
+    }
+
+    static void Init()
+    {
+        if(instance == null)
+        {
+            GameObject obj = GameObject.Find("GameManager");
+            if(obj == null)
+            {
+                obj = new GameObject { name = $"GameManager" };
+                obj.AddComponent<GameManager>();
+            }
+            DontDestroyOnLoad(obj);
+            instance = obj.GetComponent<GameManager>();
+        }
+    }
+
+    public void ChangeCrosshair(bool duringInteraction)
+    {
+        if (duringInteraction)
+        {
+
+        }
+        else
+        {
+
+        }
     }
 }
